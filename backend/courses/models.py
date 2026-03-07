@@ -48,13 +48,110 @@ class Course(models.Model):
 class Lesson(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons')
     title = models.CharField(max_length=255)
-    video_url = models.URLField()  # Link video từ Cloudinary/S3
+    video_url = models.URLField(blank=True)  # Link video từ Cloudinary/S3
     content = models.TextField(blank=True)
     order = models.PositiveIntegerField()  # Thứ tự bài học 1, 2, 3...
     is_preview = models.BooleanField(default=False)  # Bài này có cho xem miễn phí không?
+    duration = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="Video duration in seconds"
+    )
 
     class Meta:
         ordering = ['order']
 
     def __str__(self) -> str:
         return f"{self.course.title} - {self.title}"
+    
+
+class Enrollment(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="enrollments"
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="enrollments"
+    )
+    enrolled_at = models.DateTimeField(auto_now_add=True)
+
+    # Mỗi người chỉ được đăng ký một lần cho mỗi khóa học
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'course'], 
+                name='unique_user_course_enrollment'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} enrolled in {self.course.title}"
+
+# Lưu tiến độ video của học viên
+class LessonProgress(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="lesson_progress"
+    )
+    lesson = models.ForeignKey(
+        Lesson,
+        on_delete=models.CASCADE,
+        related_name="progress_records"
+    )
+    last_position = models.FloatField(
+        help_text="Video position in seconds"
+    )
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'lesson'],
+                name='unique_user_lesson_progress'
+            )
+        ]
+        indexes = [
+            models.Index(fields=['user']),
+            models.Index(fields=['lesson']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} - {self.lesson.title} ({self.last_position}s)"
+
+
+# Review và rating cho khóa học
+class Review(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reviews"
+    )
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name="reviews"
+    )
+    rating = models.IntegerField(
+        help_text="Rating from 1 to 5"
+    )
+    comment = models.TextField(blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'course'],
+                name='unique_user_course_review'
+            )
+        ]
+        indexes = [
+            models.Index(fields=['course']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} rated {self.course.title} ({self.rating}/5)"
