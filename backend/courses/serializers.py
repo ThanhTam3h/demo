@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Course, Lesson
+from .models import Course, Lesson, Review, LessonProgress
 
 
 class LessonSerializer(serializers.ModelSerializer):
@@ -8,7 +8,7 @@ class LessonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lesson
-        fields = ['id', 'title', 'duration']
+        fields = ['id', 'title', "video_url",'duration']
 
     def get_duration(self, obj) -> str:
         # Tạm thời không có trường duration trong DB, bạn có thể tính theo thời lượng video nếu muốn
@@ -51,8 +51,9 @@ class CourseListSerializer(serializers.ModelSerializer):
         return 'green'
 
     def get_duration(self, obj) -> str:
-        # Bạn có thể thay bằng trường riêng trong DB nếu muốn
-        return '20 giờ học'
+        total = sum(lesson.duration or 0 for lesson in obj.lessons.all())
+        hours = total // 3600
+        return f"{hours} giờ học"
 
     def get_tags(self, obj):
         tags = []
@@ -81,3 +82,43 @@ class CourseDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Course
         fields = ['id', 'title', 'description', 'lessons']
+
+class ReviewSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField()
+    createdAt = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Review
+        fields = [
+            'id',
+            'username',
+            'rating',
+            'comment',
+            'createdAt',
+        ]
+
+    def get_username(self, obj) -> str:
+        return obj.user.username
+
+    def get_createdAt(self, obj) -> str:
+        return obj.created_at.strftime("%d/%m/%Y")
+    
+class LessonProgressSerializer(serializers.ModelSerializer):
+    lessonTitle = serializers.SerializerMethodField()
+    updatedAt = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LessonProgress
+        fields = [
+            'id',
+            'lesson',
+            'lessonTitle',
+            'last_position', # thời điểm video đã xem (tính bằng giây)
+            'updatedAt',
+        ]
+
+    def get_lessonTitle(self, obj) -> str:
+        return obj.lesson.title
+
+    def get_updatedAt(self, obj) -> str:
+        return obj.updated_at.strftime("%d/%m/%Y %H:%M")

@@ -1,8 +1,8 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Course
-from .serializers import CourseListSerializer, CourseDetailSerializer
+from .models import Course, Review, LessonProgress
+from .serializers import CourseListSerializer, CourseDetailSerializer, ReviewSerializer, LessonProgressSerializer
 
 
 class CourseListAPIView(APIView):
@@ -15,7 +15,7 @@ class CourseListAPIView(APIView):
 class CourseDetailAPIView(APIView):
     def get(self, request, pk):
         try:
-            course = Course.objects.prefetch_related('lessons').get(pk=pk)
+            course = Course.objects.prefetch_related('lessons','reviews').get(pk=pk)
         except Course.DoesNotExist:
             return Response({'detail': 'Not found.'}, status=404)
         serializer = CourseDetailSerializer(course)
@@ -39,3 +39,17 @@ class DashboardAPIView(APIView):
             'enrolledCourses': enrolled_courses,
         }
         return Response(data)
+
+class ReviewListAPIView(APIView):
+    def get(self, request, course_id):
+        reviews = Review.objects.filter(course_id=course_id)
+        serializer = ReviewSerializer(reviews, many=True)
+        return Response(serializer.data)
+    
+class SaveLessonProgressAPIView(APIView):
+    def post(self, request):
+        serializer = LessonProgressSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)

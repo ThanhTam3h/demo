@@ -32,6 +32,7 @@ AUTH_USER_MODEL = 'users.User'
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -135,4 +136,15 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
+}
+
+JAZZMIN_SETTINGS = {
+    "site_title": "E-Learning Admin",
+    "site_header": "E-Learning",
+    "site_brand": "E-Learning",
+    "welcome_sign": "Welcome to Admin Panel",
+    "icons": {
+        "courses.Course": "fas fa-book",
+        "courses.Category": "fas fa-list",
+    },
 }
