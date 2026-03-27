@@ -23,6 +23,30 @@ Cấu trúc thư mục chính:
 
 ## 2. Cài đặt & chạy Django backend
 
+### 2.0. Cài đặt PostgreSQL & tạo database
+
+Trên máy của bạn (hoặc server), cần có PostgreSQL đang chạy.
+
+Tạo database và user (ví dụ):
+
+```sql
+CREATE DATABASE elearning_db;
+CREATE USER elearning_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE elearning_db TO elearning_user;
+```
+
+Tạo file `backend/.env` (nếu chưa có) với nội dung tối thiểu:
+
+```env
+DB_NAME=elearning_db
+DB_USER=elearning_user
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+> Nếu thiếu hoặc sai các biến này, Django sẽ báo lỗi kiểu `could not connect to server` khi khởi động.
+
 ### 2.1. Tạo & kích hoạt virtualenv (nếu chưa có)
 Trong thư mục project (chứa thư mục backend và frontend):
 
@@ -47,6 +71,7 @@ pip install -r requirements.txt
 ### 2.3. Chạy migrations
 
 ```bash
+python manage.py makemigrations
 python manage.py migrate
 ```
 
@@ -114,48 +139,17 @@ Các hàm chính trong service:
 
 Hiện tại, nếu **backend chưa có API hoặc bị lỗi**, service sẽ **tự động fallback sang dữ liệu giả (mock)** để giao diện vẫn chạy bình thường.
 
-### 4.1. Việc bạn cần làm ở Django
+### 4.1. Các API Django đã có sẵn
 
-1. Tạo các API endpoint tương ứng với URL trên, ví dụ bằng Django REST Framework:
-   - `GET /api/courses/` trả danh sách khoá học (list các object JSON giống `mockCourses`).
-   - `GET /api/courses/<id>/` trả chi tiết 1 khoá học (giống `mockCourseDetail[id]`).
-   - `GET /api/dashboard/` trả thống kê dashboard (giống `mockDashboard`).
-   - `POST /api/auth/login/` trả data user + token.
-   - `POST /api/auth/register/` tạo user mới.
+Trong code hiện tại, backend đã cấu hình sẵn các endpoint sau (Django REST Framework):
 
-2. Cấu hình URL Django (ví dụ trong `core/urls.py`) để các path này bắt đầu bằng `/api/`.
+- `GET /api/courses/` – trả danh sách khoá học.
+- `GET /api/courses/<id>/` – trả chi tiết 1 khoá học và danh sách bài học.
+- `GET /api/dashboard/` – trả thống kê dashboard và danh sách khoá đang học.
+- `POST /api/auth/login/` – đăng nhập bằng email + mật khẩu.
+- `POST /api/auth/register/` – đăng ký tài khoản mới.
 
-3. (Khuyến nghị) Cài `django-cors-headers` để cho phép React (cổng 5173) gọi sang Django (cổng 8000):
-
-   - Cài đặt:
-     ```bash
-     pip install django-cors-headers
-     ```
-
-   - Thêm vào `INSTALLED_APPS` trong `core/settings.py`:
-     ```python
-     INSTALLED_APPS = [
-         ...,
-         'corsheaders',
-     ]
-     ```
-
-   - Thêm middleware (trên CommonMiddleware):
-     ```python
-     MIDDLEWARE = [
-         'corsheaders.middleware.CorsMiddleware',
-         ...,
-     ]
-     ```
-
-   - Cho phép origin frontend:
-     ```python
-     CORS_ALLOWED_ORIGINS = [
-         'http://localhost:5173',
-     ]
-     ```
-
-Khi bạn đã làm xong các bước trên, frontend sẽ tự động sử dụng dữ liệu thật từ Django thay vì mock.
+Khi PostgreSQL + `.env` cấu hình đúng và server Django chạy, frontend sẽ tự động sử dụng dữ liệu thật thay vì mock.
 
 ---
 
