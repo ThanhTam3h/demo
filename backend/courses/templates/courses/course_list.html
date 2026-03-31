@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Danh sách khóa học</title>
+    <script src="https://cdn.tailwindcss.com"></script> </head>
+<body class="bg-gray-100 p-10">
+    <h1 class="text-3xl font-bold mb-8 text-center">Hệ thống học trực tuyến</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {% for course in courses %}
+        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="p-6">
+                <h2 class="text-xl font-semibold">{{ course.title }}</h2>
+                <p class="text-gray-600 mt-2">{{ course.description|truncatewords:20 }}</p>
+                <div class="mt-4 flex justify-between items-center">
+                    <span class="text-green-600 font-bold">${{ course.price }}</span>
+                    {% if course.is_premium_only %}
+                        <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">Hội viên</span>
+                    {% endif %}
+                </div>
+                <button class="w-full mt-4 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Xem chi tiết</button>
+            </div>
+        </div>
+        {% empty %}
+        <p>Chưa có khóa học nào được đăng.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
